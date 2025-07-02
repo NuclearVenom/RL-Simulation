@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Learning Visual Simulator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .start-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        .stop-btn {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+        }
+        
+        .reset-btn {
+            background: linear-gradient(45deg, #2196F3, #0b7dda);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            align-items: start;
+        }
+        
+        .grid-container {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(6, 80px);
+            grid-template-rows: repeat(6, 80px);
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .cell {
+            position: relative;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .cell.empty {
+            background: rgba(255, 255, 255, 0.8);
+            color: #333;
+        }
+        
+        .cell.wall {
+            background: linear-gradient(45deg, #424242, #616161);
+            color: white;
+        }
+        
+        .cell.goal {
+            background: linear-gradient(45deg, #4CAF50, #66BB6A);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .cell.agent {
+            background: linear-gradient(45deg, #FF9800, #FFB74D);
+            color: white;
+            border: 3px solid #FF5722;
+            animation: glow 1s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #FF5722; }
+            100% { box-shadow: 0 0 20px #FF5722; }
+        }
+        
+        .q-value {
+            position: absolute;
+            font-size: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .q-up { top: 2px; left: 50%; transform: translateX(-50%); }
+        .q-down { bottom: 2px; left: 50%; transform: translateX(-50%); }
+        .q-left { left: 2px; top: 50%; transform: translateY(-50%); }
+        .q-right { right: 2px; top: 50%; transform: translateY(-50%); }
+        
+        .stats {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+        }
+        
+        .stat-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .stat-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.2em;
+            color: #FFD700;
+        }
+        
+        .parameters {
+            margin-top: 20px;
+        }
+        
+        .param-group {
+            margin-bottom: 15px;
+        }
+        
+        .param-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .param-group input {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+        }
+        
+        .param-group input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid {
+                grid-template-columns: repeat(6, 60px);
+                grid-template-rows: repeat(6, 60px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Q-Learning Visual Simulator</h1>
+        
+        <div class="controls">
+            <button class="start-btn" onclick="startTraining()">Start Learning</button>
+            <button class="stop-btn" onclick="stopTraining()">Stop</button>
+            <button class="reset-btn" onclick="resetEnvironment()">Reset</button>
+        </div>
+        
+        <div class="main-content">
+            <div class="grid-container">
+                <div class="grid" id="grid"></div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Episode</div>
+                    <div class="stat-value" id="episode">0</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-label">Steps in Episode</div>
+                    <div class="stat-value" id="steps">0</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-label">Total Reward</div>
+                    <div class="stat-value" id="reward">0</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-label">Epsilon (Exploration)</div>
+                    <div class="stat-value" id="epsilon">1.00</div>
+                </div>
+                
+                <div class="parameters">
+                    <h3>Parameters</h3>
+                    
+                    <div class="param-group">
+                        <label>Learning Rate (α)</label>
+                        <input type="number" id="learningRate" value="0.1" min="0" max="1" step="0.01">
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Discount Factor (γ)</label>
+                        <input type="number" id="discountFactor" value="0.9" min="0" max="1" step="0.01">
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Epsilon Decay</label>
+                        <input type="number" id="epsilonDecay" value="0.995" min="0.9" max="1" step="0.001">
+                    </div>
+                    
+                    <div class="param-group">
+                        <label>Animation Speed (ms)</label>
+                        <input type="number" id="animationSpeed" value="100" min="50" max="1000" step="50">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Environment setup
+        const GRID_SIZE = 6;
+        const ACTIONS = ['up', 'down', 'left', 'right'];
+        const ACTION_MAP = {
+            'up': [-1, 0],
+            'down': [1, 0],
+            'left': [0, -1],
+            'right': [0, 1]
+        };
+
+        // Environment state
+        let environment = [];
+        let qTable = {};
+        let agentPos = [0, 0];
+        let goalPos = [5, 5];
+        let walls = [[1, 1], [1, 2], [2, 3], [3, 1], [3, 4], [4, 2]];
+        
+        // Training state
+        let isTraining = false;
+        let episode = 0;
+        let steps = 0;
+        let totalReward = 0;
+        let epsilon = 1.0;
+        let trainingInterval;
+
+        // Initialize environment
+        function initEnvironment() {
+            environment = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill('empty'));
+            
+            // Set walls
+            walls.forEach(([r, c]) => {
+                environment[r][c] = 'wall';
+            });
+            
+            // Set goal
+            environment[goalPos[0]][goalPos[1]] = 'goal';
+            
+            // Set agent
+            environment[agentPos[0]][agentPos[1]] = 'agent';
+            
+            // Initialize Q-table
+            qTable = {};
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (environment[r][c] !== 'wall') {
+                        const state = `${r},${c}`;
+                        qTable[state] = {};
+                        ACTIONS.forEach(action => {
+                            qTable[state][action] = 0;
+                        });
+                    }
+                }
+            }
+        }
+
+        // Render the grid
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${environment[r][c]}`;
+                    
+                    // Add Q-values if not wall
+                    if (environment[r][c] !== 'wall') {
+                        const state = `${r},${c}`;
+                        if (qTable[state]) {
+                            const qValues = qTable[state];
+                            
+                            // Add Q-value displays
+                            ['up', 'down', 'left', 'right'].forEach(action => {
+                                const qValueDiv = document.createElement('div');
+                                qValueDiv.className = `q-value q-${action}`;
+                                qValueDiv.textContent = qValues[action].toFixed(2);
+                                cell.appendChild(qValueDiv);
+                            });
+                        }
+                    }
+                    
+                    if (environment[r][c] === 'wall') {
+                        cell.textContent = '🧱';
+                    } else if (environment[r][c] === 'goal') {
+                        cell.textContent = '🎯';
+                    } else if (environment[r][c] === 'agent') {
+                        cell.textContent = '🤖';
+                    }
+                    
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        // Get valid actions from a position
+        function getValidActions(pos) {
+            const [r, c] = pos;
+            const validActions = [];
+            
+            ACTIONS.forEach(action => {
+                const [dr, dc] = ACTION_MAP[action];
+                const newR = r + dr;
+                const newC = c + dc;
+                
+                if (newR >= 0 && newR < GRID_SIZE && 
+                    newC >= 0 && newC < GRID_SIZE && 
+                    environment[newR][newC] !== 'wall') {
+                    validActions.push(action);
+                }
+            });
+            
+            return validActions;
+        }
+
+        // Choose action using epsilon-greedy policy
+        function chooseAction(state) {
+            const validActions = getValidActions(agentPos);
+            
+            if (Math.random() < epsilon) {
+                // Explore: random action
+                return validActions[Math.floor(Math.random() * validActions.length)];
+            } else {
+                // Exploit: best action
+                let bestAction = validActions[0];
+                let bestValue = qTable[state][bestAction];
+                
+                validActions.forEach(action => {
+                    if (qTable[state][action] > bestValue) {
+                        bestValue = qTable[state][action];
+                        bestAction = action;
+                    }
+                });
+                
+                return bestAction;
+            }
+        }
+
+        // Execute action and get reward
+        function executeAction(action) {
+            const [dr, dc] = ACTION_MAP[action];
+            const newR = agentPos[0] + dr;
+            const newC = agentPos[1] + dc;
+            
+            // Clear current agent position
+            environment[agentPos[0]][agentPos[1]] = 'empty';
+            
+            // Move agent
+            agentPos = [newR, newC];
+            
+            // Calculate reward
+            let reward = -0.1; // Small negative reward for each step
+            let done = false;
+            
+            if (agentPos[0] === goalPos[0] && agentPos[1] === goalPos[1]) {
+                reward = 10; // Large positive reward for reaching goal
+                done = true;
+            }
+            
+            // Set new agent position
+            if (done) {
+                environment[agentPos[0]][agentPos[1]] = 'goal';
+            } else {
+                environment[agentPos[0]][agentPos[1]] = 'agent';
+            }
+            
+            return { reward, done };
+        }
+
+        // Update Q-value
+        function updateQValue(state, action, reward, nextState) {
+            const learningRate = parseFloat(document.getElementById('learningRate').value);
+            const discountFactor = parseFloat(document.getElementById('discountFactor').value);
+            
+            const currentQ = qTable[state][action];
+            const maxNextQ = nextState ? Math.max(...Object.values(qTable[nextState])) : 0;
+            
+            const newQ = currentQ + learningRate * (reward + discountFactor * maxNextQ - currentQ);
+            qTable[state][action] = newQ;
+        }
+
+        // Training step
+        function trainingStep() {
+            const currentState = `${agentPos[0]},${agentPos[1]}`;
+            const action = chooseAction(currentState);
+            const { reward, done } = executeAction(action);
+            
+            const nextState = `${agentPos[0]},${agentPos[1]}`;
+            updateQValue(currentState, action, reward, done ? null : nextState);
+            
+            steps++;
+            totalReward += reward;
+            
+            // Update display
+            updateStats();
+            renderGrid();
+            
+            if (done) {
+                episode++;
+                steps = 0;
+                totalReward = 0;
+                
+                // Decay epsilon
+                const epsilonDecay = parseFloat(document.getElementById('epsilonDecay').value);
+                epsilon = Math.max(0.01, epsilon * epsilonDecay);
+                
+                // Reset agent position
+                environment[agentPos[0]][agentPos[1]] = 'goal';
+                agentPos = [0, 0];
+                environment[agentPos[0]][agentPos[1]] = 'agent';
+            }
+        }
+
+        // Update statistics display
+        function updateStats() {
+            document.getElementById('episode').textContent = episode;
+            document.getElementById('steps').textContent = steps;
+            document.getElementById('reward').textContent = totalReward.toFixed(2);
+            document.getElementById('epsilon').textContent = epsilon.toFixed(3);
+        }
+
+        // Start training
+        function startTraining() {
+            if (!isTraining) {
+                isTraining = true;
+                const animationSpeed = parseInt(document.getElementById('animationSpeed').value);
+                trainingInterval = setInterval(trainingStep, animationSpeed);
+            }
+        }
+
+        // Stop training
+        function stopTraining() {
+            isTraining = false;
+            if (trainingInterval) {
+                clearInterval(trainingInterval);
+            }
+        }
+
+        // Reset environment
+        function resetEnvironment() {
+            stopTraining();
+            episode = 0;
+            steps = 0;
+            totalReward = 0;
+            epsilon = 1.0;
+            agentPos = [0, 0];
+            initEnvironment();
+            updateStats();
+            renderGrid();
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initEnvironment();
+            updateStats();
+            renderGrid();
+        };
+    </script>
+</body>
+</html>
