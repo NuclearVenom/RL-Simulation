@@ -4,4 +4,4 @@ It is a live visual representation of how Reinforcement Learning algorithms work
 *The first program is a simulation of the simple Q-learning algorithm.* It represents how the parameters alpha, gamma & epsilon works.
 The user can also edit the parameters and see the effect in action. I believe this will help the beginners to understand Q-Learning more efficiently.
 
-<!-- Last updated: 2025-12-23 20.12.13 -->
+<!-- Last updated: 2025-12-30 11.53.51 -->
